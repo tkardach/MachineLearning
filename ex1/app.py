@@ -3,9 +3,14 @@ sys.path.append('..\MLNumpy')
 
 import numpy as np
 from ML.common import *
+from ML.plotting import generate_validation_curve
 from matplotlib import ticker, cm
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import learning_curve
+from sklearn.preprocessing import StandardScaler
 
 # Return a scatter plot using the provided X and Y points
 def plotGraph(X, y, graphName="Scatter plot", xlabel="X Axis", ylabel="Y Axis", figureName="Scatter Plot Figure"):
@@ -35,64 +40,142 @@ def plotContour(x, y, Z, logRange, graphName="Contour plot", figureName="Contour
     fig.colorbar(cp)
     return plt
 
-X, y = extractData("ex1/ex1data1.csv")
-m = len(X)
+def do_coursework(X, y):
+    m = len(X)
 
-# Add ones vector to X array
-X = np.insert(X, 0, 1.0, axis=1)
-theta = np.zeros(2, dtype=int)
+    # Add ones vector to X array
+    X = np.insert(X, 0, 1.0, axis=1)
+    theta = np.zeros(2, dtype=int)
 
-itterations = 1500
-alpha = 0.01
+    itterations = 1500
+    alpha = 0.01
 
-print("\nTesting the cost function...\n")
-J = computeCost(X, y, np.array([-1, 2]))
+    print("\nTesting the cost function...\n")
+    J = computeCost(X, y, np.array([-1, 2]))
 
-print("With theta = [-1; 2]\n Cost Computed = %f\n", J)
-print("Expected cost value (approx) 54.24\n")
+    print("With theta = [-1; 2]\n Cost Computed = %f\n", J)
+    print("Expected cost value (approx) 54.24\n")
 
-print("\nRunning Gradient Descent...\n")
-theta, J_history = gradientDescent(X, y, theta, alpha, itterations)
+    print("\nRunning Gradient Descent...\n")
+    theta, J_history = gradientDescent(X, y, theta, alpha, itterations)
 
-print("Theta found by gradient descent:\n")
-print(theta)
-print("\nExpected values (approx) -3.6303, 1.1664\n")
+    print("Theta found by gradient descent:\n")
+    print(theta)
+    print("\nExpected values (approx) -3.6303, 1.1664\n")
 
-print("\nPlotting linear fit\n")
-linReg = plotGraph(X[:, [1]], y, graphName="Linear Fit", xlabel="Population of City in 10,000s",
-                   ylabel="Profit in $10,000s", figureName="Linear Fit")
-linReg.plot(X[:, [1]], hypothesis(
-    np.insert(X[:, [1]], 0, 1.0, axis=1), theta), c="red")
-linReg.draw()
+    print("\nPlotting linear fit\n")
+    linReg = plotGraph(X[:, [1]], y, graphName="Linear Fit", xlabel="Population of City in 10,000s",
+                    ylabel="Profit in $10,000s", figureName="Linear Fit")
+    linReg.plot(X[:, [1]], hypothesis(
+        np.insert(X[:, [1]], 0, 1.0, axis=1), theta), c="red")
+    linReg.draw()
 
-print("\nVisualizing the Cost Function over Itterations\n")
-costProg = plotGraph(np.arange(itterations), J_history,
-                     graphName="Gradient Descent", xlabel="Itterations", ylabel="Cost Function Value", figureName="Cost Function Over Itterations")
-costProg.draw()
+    print("\nVisualizing the Cost Function over Itterations\n")
+    costProg = plotGraph(np.arange(itterations), J_history,
+                        graphName="Gradient Descent", xlabel="Itterations", ylabel="Cost Function Value", figureName="Cost Function Over Itterations")
+    costProg.draw()
 
-predict1 = np.dot(np.matrix([1, 3.5]), theta.reshape(len(theta), 1))
-print("Predition for population = 35,000    :    ", predict1.item() * 10000)
+    predict1 = np.dot(np.matrix([1, 3.5]), theta.reshape(len(theta), 1))
+    print("Predition for population = 35,000    :    ", predict1.item() * 10000)
 
-predict2 = np.dot(np.matrix([1, 7]), theta.reshape(len(theta), 1))
-print("Predition for population = 70,000    :    ", predict2.item() * 10000)
+    predict2 = np.dot(np.matrix([1, 7]), theta.reshape(len(theta), 1))
+    print("Predition for population = 70,000    :    ", predict2.item() * 10000)
 
-print("\nVisualize the Cost Function Over 3D Space\n")
-theta0 = np.linspace(-10, 10, num=100)
-theta1 = np.linspace(-1, 4, num=100)
+    print("\nVisualize the Cost Function Over 3D Space\n")
+    theta0 = np.linspace(-10, 10, num=100)
+    theta1 = np.linspace(-1, 4, num=100)
 
-Z = np.zeros((len(theta0), len(theta1)))
+    Z = np.zeros((len(theta0), len(theta1)))
 
-for i in range(len(theta1)):
-    for j in range(len(theta0)):
-        t = np.array([theta0[j], theta1[i]])
-        Z[i, j] = computeCost(X, y, t)
-
-
-surf = plotSurface(theta0, theta1, Z, figureName="3D Plot of Cost Function")
-surf.draw()
+    for i in range(len(theta1)):
+        for j in range(len(theta0)):
+            t = np.array([theta0[j], theta1[i]])
+            Z[i, j] = computeCost(X, y, t)
 
 
-print("\nVisualize the Cost Function on a Contour Graph")
-plot = plotContour(theta0, theta1, Z, np.logspace(-2, 3, 20), figureName="Contour Plot of Cost Function")
-plot.scatter(theta[0, 0], theta[1, 0], c="red")
-plot.show()
+    surf = plotSurface(theta0, theta1, Z, figureName="3D Plot of Cost Function")
+    surf.draw()
+
+
+    print("\nVisualize the Cost Function on a Contour Graph")
+    plot = plotContour(theta0, theta1, Z, np.logspace(-2, 3, 20), figureName="Contour Plot of Cost Function")
+    plot.scatter(theta[0, 0], theta[1, 0], c="red")
+    plot.show()
+
+def model_dataset_1():
+    scaler = StandardScaler()
+
+    # Find a well fitted model for the first data set
+    X, y = extractData("ex1/ex1data1.csv")
+
+    X_scaled = scaler.fit_transform(X)
+
+    # Here we divide the data into training and testing sets
+    #   test_size : percentage we want allocated towards the test set (20%)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=4)
+
+    clf = LinearRegression()
+
+    clf.fit(X_train, y_train)
+
+    print("Accuracy for example 1: ", clf.score(X_test, y_test))
+
+    # Plot learning curve of the model
+    t_sizes, t_scores, cv_scores = learning_curve(
+        LinearRegression(),
+        X_scaled,
+        y,
+        cv=5,
+        train_sizes=np.linspace(0.1,1.0,15),
+        shuffle=True,
+        scoring="neg_mean_squared_error"
+    )
+
+    generate_validation_curve(t_scores, cv_scores, t_sizes)
+
+    # Plot data and model prediction
+    plt.figure()
+    plt.scatter(X,y)
+    plt.plot(X, clf.predict(X_scaled))
+
+    plt.draw()
+
+def model_dataset_2():
+    scaler = StandardScaler()
+
+    # Find a well fitted model for the first data set
+    X, y = extractData("ex1/ex1data2.csv")
+
+    X_scaled = scaler.fit_transform(X)
+
+    # Here we divide the data into training and testing sets
+    #   test_size : percentage we want allocated towards the test set (20%)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=4)
+
+    # Here we are creating our LinearRegression object which we will use to fit our linear model
+    #   The LinearRegression object will fit itself to our training data
+    clf = LinearRegression()
+
+    # Train our linear model using LinearRegression
+    clf.fit(X_train, y_train)
+
+    print("Accuracy for example 2: ", clf.score(X_test, y_test))
+
+    # Generate information needed to graph a learning curve
+    t_sizes, t_scores, cv_scores = learning_curve(
+        LinearRegression(),
+        X,
+        y,
+        train_sizes=np.linspace(0.1,1.0,15),
+        cv=5,
+        shuffle=True,
+        scoring="neg_mean_squared_error"
+    )
+
+    generate_validation_curve(t_scores, cv_scores, t_sizes.reshape(len(t_sizes),1))
+
+    plt.draw()
+
+model_dataset_1()
+model_dataset_2()
+plt.show()
