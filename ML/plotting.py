@@ -17,6 +17,6 @@ def generate_validation_curve(train_scores, validation_scores, train_sizes, name
                     label="Cross-validation score", markersize=3)
     plt.legend(loc="best")
     
-    plt.ylim(train_scores_mean.min() - 1.0, validation_scores_mean.max() + 1.0)
-    plt.xlim(train_sizes.min(), train_sizes.max())
+    plt.ylim(np.nanmin(train_scores_mean) - 1.0, np.nanmax(validation_scores_mean) + 1.0)
+    plt.xlim(np.nanmin(train_sizes), np.nanmax(train_sizes))
     plt.draw()

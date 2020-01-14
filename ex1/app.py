@@ -11,6 +11,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import learning_curve
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import StratifiedKFold
+    
 
 # Return a scatter plot using the provided X and Y points
 def plotGraph(X, y, graphName="Scatter plot", xlabel="X Axis", ylabel="Y Axis", figureName="Scatter Plot Figure"):
@@ -110,11 +113,15 @@ def model_dataset_1():
 
     X_scaled = scaler.fit_transform(X)
 
+
     # Here we divide the data into training and testing sets
     #   test_size : percentage we want allocated towards the test set (20%)
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=4)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=5)
 
-    clf = LinearRegression()
+    clf = LinearRegression(normalize=True)
+
+    parameters = {'fit_intercept':[True,False], 'normalize':[True,False], 'copy_X':[True, False]}
+    grid = GridSearchCV(clf, parameters, cv=None)
 
     clf.fit(X_train, y_train)
 
@@ -123,7 +130,7 @@ def model_dataset_1():
     # Plot learning curve of the model
     t_sizes, t_scores, cv_scores = learning_curve(
         LinearRegression(),
-        X_scaled,
+        X,
         y,
         cv=5,
         train_sizes=np.linspace(0.1,1.0,15),
@@ -150,11 +157,11 @@ def model_dataset_2():
 
     # Here we divide the data into training and testing sets
     #   test_size : percentage we want allocated towards the test set (20%)
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=4)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=2)
 
     # Here we are creating our LinearRegression object which we will use to fit our linear model
     #   The LinearRegression object will fit itself to our training data
-    clf = LinearRegression()
+    clf = LinearRegression(normalize=True)
 
     # Train our linear model using LinearRegression
     clf.fit(X_train, y_train)
@@ -172,10 +179,42 @@ def model_dataset_2():
         scoring="neg_mean_squared_error"
     )
 
+    print(clf.coef_)
+    print(clf.predict(scaler.transform([[1650, 3]])))
+
     generate_validation_curve(t_scores, cv_scores, t_sizes.reshape(len(t_sizes),1))
 
     plt.draw()
 
-model_dataset_1()
-model_dataset_2()
-plt.show()
+#model_dataset_1()
+#model_dataset_2()
+#plt.show()
+
+
+# Find a well fitted model for the first data set
+X, y = extractData("ex1/ex1data2.csv")
+
+# Here we divide the data into training and testing sets
+#   test_size : percentage we want allocated towards the test set (20%)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
+
+
+
+parameters = {'fit_intercept':[True,False], 'normalize':[True,False], 'copy_X':[True, False]}
+
+grid = GridSearchCV(LinearRegression(), parameters)
+
+grid.fit(X_train, y_train)
+
+print("Best parameters : ")
+print(grid.best_params_)
+print("Grid scores : ")
+means = grid.cv_results_['mean_test_score']
+stds = grid.cv_results_['std_test_score']
+for mean, std, params in zip(means, stds, grid.cv_results_['params']):
+    print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+
+
+
+print("Best Score: ", grid.best_score_)
+print(grid.score(X_test, y_test))
