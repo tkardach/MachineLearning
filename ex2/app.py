@@ -14,7 +14,11 @@ from sklearn.metrics import roc_auc_score
 from matplotlib.offsetbox import AnchoredText
 
 
-def generate_roc_curve(clf, X_test, y_test, graph=None, name=None):
+def generate_roc_curve(clf, X, y, graph=None, name=None):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+
+    clf.fit(X_train, y_train)
+
     ns_probs = [0 for _ in range(len(y_test))]
 
     lr_probs = clf.predict_proba(X_test)
@@ -39,11 +43,13 @@ def generate_roc_curve(clf, X_test, y_test, graph=None, name=None):
         graph.set_xlabel("False Positive Rate")
         graph.set_ylabel("True Positive Rate")
         graph.set_title(name)
+    
+    graph.annotate(lr_score, xy=(1,0), horizontalalignment='right', verticalalignment='bottom')
 
     graph.plot(ns_fpr, ns_tpr, linestyle='--', label="No Skill")
     graph.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
 
-    graph.legend()
+    graph.legend(loc='upper right')
 
 def generate_decision_contour_clf(u, v, X, clf, graph=None, name=None, degree=6):
     z = np.zeros((len(u), len(v)))
@@ -123,7 +129,7 @@ def run_example_1(params):
 
     generate_validation_curve(t_scores, cv_scores, t_sizes, graph=ax2, name="Learning Curve")
 
-    generate_roc_curve(clf, X_test, y_test, graph=ax3, name="ROC Curve")
+    generate_roc_curve(LogisticRegression(**params), X, y, graph=ax3, name="ROC Curve")
 
 
 def run_example_2(params):
@@ -178,7 +184,7 @@ def run_example_2(params):
 
     generate_validation_curve(t_scores, cv_scores, t_sizes, graph=ax2, name="Learning Curve")
 
-    generate_roc_curve(clf, X_test, y_test, graph=ax3, name="ROC Curve")
+    generate_roc_curve(LogisticRegression(**params), X, y, graph=ax3, name="ROC Curve")
 
 
 # Find a well fitted model for the first data set
