@@ -71,7 +71,12 @@ def analyze_log_reg(X, y, poly=None):
     best_poly = 1
     best_params = None
 
-    parameters = {'C':[0.1,1,3,10,30,100], 'solver':['newton-cg','lbfgs','liblinear','sag','saga'], 'fit_intercept':[True, False], 'penalty':['l1', 'l2','elasticnet','none']}
+    parameters = {
+        'C':[0.1,1,3,10,30,100], 
+        'solver':['newton-cg','lbfgs','liblinear','sag','saga'], 
+        'fit_intercept':[True, False], 
+        'penalty':['l1', 'l2','elasticnet','none']
+        }
 
     for i in range(1,poly+1):
         if i == 1:

@@ -11,9 +11,41 @@ from sklearn.model_selection import learning_curve
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
+from matplotlib.offsetbox import AnchoredText
 
 
-def generate_decision_contour_clf(u, v, X, clf, name=None, degree=6):
+def generate_roc_curve(clf, X_test, y_test, graph=None, name=None):
+    ns_probs = [0 for _ in range(len(y_test))]
+
+    lr_probs = clf.predict_proba(X_test)
+    lr_probs = lr_probs[:,1]
+
+    ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
+    lr_fpr, lr_tpr, _ = roc_curve(y_test, lr_probs)
+
+    ns_score = 'No Skill: ROC AUC=%.3f' % (roc_auc_score(y_test, ns_probs))
+    lr_score = 'Logistic: ROC AUC=%.3f' % (roc_auc_score(y_test, lr_probs))
+
+
+    if graph is None:
+        if name is not None:
+            plt.figure(num=name)
+        else:
+            plt.figure()
+        graph = plt
+        graph.xlabel("False Positive Rate")
+        graph.ylabel("True Positive Rate")
+    else:    
+        graph.set_xlabel("False Positive Rate")
+        graph.set_ylabel("True Positive Rate")
+        graph.set_title(name)
+
+    graph.plot(ns_fpr, ns_tpr, linestyle='--', label="No Skill")
+    graph.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
+
+    graph.legend()
+
+def generate_decision_contour_clf(u, v, X, clf, graph=None, name=None, degree=6):
     z = np.zeros((len(u), len(v)))
 
     # Create a grid of prediction values using the learned coefficients
@@ -22,15 +54,20 @@ def generate_decision_contour_clf(u, v, X, clf, name=None, degree=6):
             z[i,j] = clf.predict(map_feature(np.array([[u[i], v[j]]]), degree))
     z = z.transpose()
 
-    if name is not None:
-        plt.figure(num=name)
+    if graph is None:
+        if name is not None:
+            plt.figure(num=name)
+        else:
+            plt.figure()
+        graph = plt
+        graph.xlim(u.min(), u.max())
+        graph.ylim(v.min(), v.max())
     else:
-        plt.figure()
+        graph.set_title(name)
+        graph.set_xlim(u.min(), u.max())
+        graph.set_ylim(v.min(), v.max())
 
-    plt.xlim(u.min(), u.max())
-    plt.ylim(v.min(), v.max())
-    plt.contourf(u, v, z, 1, cmap=cm.RdBu, alpha=.8)
-    plt.draw()
+    graph.contourf(u, v, z, 1, cmap=cm.RdBu, alpha=.8)
 
     return z
     
@@ -57,20 +94,21 @@ def run_example_1(params):
     x_min, x_max = X[:,1].min(), X[:,1].max()
     y_min, y_max = X[:,2].min(), X[:,2].max()
 
+    fig, (ax1, ax2, ax3) = plt.subplots(1,3)
+
     generate_decision_contour_clf(
         np.linspace(x_min - .5, x_max + .5, 100), 
         np.linspace(y_min - .5, y_max + .5, 100), 
         X, 
         clf, 
-        name="Example 1 : Logistic Regression over Polynomial Features",
+        graph=ax1,
+        name="Logistic Regression Model",
         degree=2)
 
     # Add data points to contour map
-    plt.scatter(X[pos,1], X[pos,2], marker='+', c="green")
-    plt.scatter(X[neg,1], X[neg,2], marker='.', c="red")
-    plt.text(95, 35, ("%.2f" % clf.score(X_test, y_test)).lstrip('0'), size=15, horizontalalignment='right')
-
-    plt.draw()
+    ax1.scatter(X[pos,1], X[pos,2], marker='+', c="green")
+    ax1.scatter(X[neg,1], X[neg,2], marker='.', c="red")
+    ax1.text(95, 35, ("%.2f" % clf.score(X_test, y_test)).lstrip('0'), size=15, horizontalalignment='right')
 
     # Plot the validation curve
     t_sizes, t_scores, cv_scores = learning_curve(
@@ -83,7 +121,9 @@ def run_example_1(params):
         scoring="neg_mean_squared_error"
     )
 
-    generate_validation_curve(t_scores, cv_scores, t_sizes, name="Validation Curve 1")
+    generate_validation_curve(t_scores, cv_scores, t_sizes, graph=ax2, name="Learning Curve")
+
+    generate_roc_curve(clf, X_test, y_test, graph=ax3, name="ROC Curve")
 
 
 def run_example_2(params):
@@ -108,20 +148,22 @@ def run_example_2(params):
     x_min, x_max = X[:,1].min(), X[:,1].max()
     y_min, y_max = X[:,2].min(), X[:,2].max()
 
+    fig, (ax1, ax2, ax3) = plt.subplots(1,3)
 
     generate_decision_contour_clf(
         np.linspace(x_min - .5, x_max + .5, 100), 
         np.linspace(y_min - .5, y_max + .5, 100), 
         X, 
         clf, 
-        name="Example 2 : Logistic Regression over Polynomial Features",
+        graph=ax1,
+        name="Logistic Regression Model",
         degree=3)
 
     # Add data points to contour map
-    plt.scatter(X[pos,1], X[pos,2], marker='+', c="green")
-    plt.scatter(X[neg,1], X[neg,2], marker='.', c="red")
+    ax1.scatter(X[pos,1], X[pos,2], marker='+', c="green")
+    ax1.scatter(X[neg,1], X[neg,2], marker='.', c="red")
 
-    plt.text(1.0, -.75, ("%.2f" % clf.score(X_test, y_test)).lstrip('0'), size=15, horizontalalignment='right')
+    ax1.text(1.0, -.75, ("%.2f" % clf.score(X_test, y_test)).lstrip('0'), size=15, horizontalalignment='right')
 
     # Plot the validation curve
     t_sizes, t_scores, cv_scores = learning_curve(
@@ -134,7 +176,9 @@ def run_example_2(params):
         scoring="neg_mean_squared_error"
     )
 
-    generate_validation_curve(t_scores, cv_scores, t_sizes, name="Validation Curve 2")
+    generate_validation_curve(t_scores, cv_scores, t_sizes, graph=ax2, name="Learning Curve")
+
+    generate_roc_curve(clf, X_test, y_test, graph=ax3, name="ROC Curve")
 
 
 # Find a well fitted model for the first data set
