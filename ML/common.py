@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 
 # extract X and y data from a csv file
-def extractData(filename):
+def extract_data(filename):
     f = open(filename)
 
     data = np.loadtxt(fname=f, delimiter=',')
@@ -64,26 +64,21 @@ def optimize_parameters(est, X, y, parameters, cv=None):
 
     return grid.best_params_, grid.best_score_, grid.score(X_test, y_test)
 
-
-# Find the best parameters to use with logistic regression
-def analyze_log_reg(X, y, poly=None):
+def analyze_estimator(clf, X, y, parameters, poly=None):
     best_score = 0.0
     best_poly = 1
     best_params = None
+    best_scaled = False
 
-    parameters = {
-        'C':[0.1,1,3,10,30,100], 
-        'solver':['newton-cg','lbfgs','liblinear','sag','saga'], 
-        'fit_intercept':[True, False], 
-        'penalty':['l1', 'l2','elasticnet','none']
-        }
+    if poly is None:
+        poly = 1
 
     for i in range(1,poly+1):
         if i == 1:
             X_poly = X
         else:
             X_poly = map_feature(X, i)
-        b_params, grid_score, test_score = optimize_parameters(LogisticRegression(max_iter=1000), X_poly, y, parameters)    
+        b_params, grid_score, test_score = optimize_parameters(clf, X_poly, y, parameters)    
 
         if grid_score > best_score:
             best_score = grid_score
@@ -91,3 +86,23 @@ def analyze_log_reg(X, y, poly=None):
             best_params = b_params
 
     return best_params, best_poly, best_score
+
+def analyze_lin_reg(X, y):
+    parameters = {
+        'fit_intercept':[True, False], 
+        'normalize':[True, False],
+        'copy_X':[True, False]
+        }
+
+    return analyze_estimator(LinearRegression(), X, y, parameters)
+
+# Find the best parameters to use with logistic regression
+def analyze_log_reg(X, y):
+    parameters = {
+        'C':[0.1,1,3,10,30,100], 
+        'solver':['newton-cg','lbfgs','liblinear','sag','saga'], 
+        'fit_intercept':[True, False], 
+        'penalty':['l1', 'l2','elasticnet','none']
+        }
+
+    return analyze_estimator(LogisticRegression(max_iter=1000), X, y, parameters)

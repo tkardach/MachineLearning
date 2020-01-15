@@ -109,19 +109,17 @@ def model_dataset_1():
     scaler = StandardScaler()
 
     # Find a well fitted model for the first data set
-    X, y = extractData("ex1/ex1data1.csv")
+    X, y = extract_data("ex1/ex1data1.csv")
 
     X_scaled = scaler.fit_transform(X)
 
+    fig, (ax1, ax2) = plt.subplots(1,2)
 
     # Here we divide the data into training and testing sets
     #   test_size : percentage we want allocated towards the test set (20%)
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=5)
 
-    clf = LinearRegression(normalize=True)
-
-    parameters = {'fit_intercept':[True,False], 'normalize':[True,False], 'copy_X':[True, False]}
-    grid = GridSearchCV(clf, parameters, cv=None)
+    clf = LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
 
     clf.fit(X_train, y_train)
 
@@ -129,8 +127,8 @@ def model_dataset_1():
 
     # Plot learning curve of the model
     t_sizes, t_scores, cv_scores = learning_curve(
-        LinearRegression(),
-        X,
+        LinearRegression(copy_X=True, fit_intercept=True, normalize=False),
+        X_scaled,
         y,
         cv=5,
         train_sizes=np.linspace(0.1,1.0,15),
@@ -138,12 +136,11 @@ def model_dataset_1():
         scoring="neg_mean_squared_error"
     )
 
-    generate_validation_curve(t_scores, cv_scores, t_sizes)
+    generate_validation_curve(t_scores, cv_scores, t_sizes, graph=ax1)
 
     # Plot data and model prediction
-    plt.figure()
-    plt.scatter(X,y)
-    plt.plot(X, clf.predict(X_scaled))
+    ax2.scatter(X,y)
+    ax2.plot(X, clf.predict(X_scaled))
 
     plt.draw()
 
@@ -151,7 +148,7 @@ def model_dataset_2():
     scaler = StandardScaler()
 
     # Find a well fitted model for the first data set
-    X, y = extractData("ex1/ex1data2.csv")
+    X, y = extract_data("ex1/ex1data2.csv")
 
     X_scaled = scaler.fit_transform(X)
 
@@ -161,7 +158,7 @@ def model_dataset_2():
 
     # Here we are creating our LinearRegression object which we will use to fit our linear model
     #   The LinearRegression object will fit itself to our training data
-    clf = LinearRegression(normalize=True)
+    clf = LinearRegression(copy_X=True, fit_intercept=True, normalize=True)
 
     # Train our linear model using LinearRegression
     clf.fit(X_train, y_train)
@@ -170,8 +167,8 @@ def model_dataset_2():
 
     # Generate information needed to graph a learning curve
     t_sizes, t_scores, cv_scores = learning_curve(
-        LinearRegression(),
-        X,
+        LinearRegression(copy_X=True, fit_intercept=True, normalize=True),
+        X_scaled,
         y,
         train_sizes=np.linspace(0.1,1.0,15),
         cv=5,
@@ -184,37 +181,22 @@ def model_dataset_2():
 
     generate_validation_curve(t_scores, cv_scores, t_sizes.reshape(len(t_sizes),1))
 
-    plt.draw()
 
-#model_dataset_1()
-#model_dataset_2()
-#plt.show()
+def analyze_dataset(X, y):
+    best_params, best_poly, best_score = analyze_lin_reg(X, y)
 
-
-# Find a well fitted model for the first data set
-X, y = extractData("ex1/ex1data2.csv")
-
-# Here we divide the data into training and testing sets
-#   test_size : percentage we want allocated towards the test set (20%)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
+    print("Best parameters : ", best_params)
+    print("Best Polynomial Degree: ", best_poly)
+    print("Best Score: ", best_score)
 
 
+#X, y = extract_data("ex1/ex1data1.csv")
+#analyze_dataset(X, y)
 
-parameters = {'fit_intercept':[True,False], 'normalize':[True,False], 'copy_X':[True, False]}
+#X, y = extract_data("ex1/ex1data2.csv")
+#analyze_dataset(X,y)
 
-grid = GridSearchCV(LinearRegression(), parameters)
+model_dataset_1()
+model_dataset_2()
+plt.show()
 
-grid.fit(X_train, y_train)
-
-print("Best parameters : ")
-print(grid.best_params_)
-print("Grid scores : ")
-means = grid.cv_results_['mean_test_score']
-stds = grid.cv_results_['std_test_score']
-for mean, std, params in zip(means, stds, grid.cv_results_['params']):
-    print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
-
-
-
-print("Best Score: ", grid.best_score_)
-print(grid.score(X_test, y_test))

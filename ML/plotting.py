@@ -8,6 +8,9 @@ def generate_validation_curve(train_scores, validation_scores, train_sizes, grap
     train_scores_mean = -np.mean(train_scores, axis=1)
     validation_scores_mean = -np.mean(validation_scores, axis=1)
 
+    print(train_scores_mean)
+    print(validation_scores_mean)
+
     if graph is None:
         if name is not None:
             plt.figure(num=name)

@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..\MLNumpy')
 
-from ML.common import extractData, optimize_parameters, analyze_log_reg, map_feature
+from ML.common import extract_data, optimize_parameters, analyze_log_reg, map_feature
 from ML.plotting import generate_validation_curve
 import numpy as np
 import matplotlib.pyplot as plt
@@ -80,7 +80,7 @@ def generate_decision_contour_clf(u, v, X, clf, graph=None, name=None, degree=6)
 
 def run_example_1(params):
     # Extract data an load into X,y variables
-    X, y = extractData("ex2/ex2data1.csv")
+    X, y = extract_data("ex2/ex2data1.csv")
 
     # Create positive and negative value index arrays
     pos = np.argwhere(y == 1)
@@ -134,7 +134,7 @@ def run_example_1(params):
 
 def run_example_2(params):
     # Extract data an load into X,y variables
-    X, y = extractData("ex2/ex2data2.csv")
+    X, y = extract_data("ex2/ex2data2.csv")
 
     # Create positive and negative value index arrays
     pos = np.argwhere(y == 1)
@@ -189,7 +189,7 @@ def run_example_2(params):
 
 # Find a well fitted model for the first data set
 def analyze_dataset_1():
-    X, y = extractData("ex2/ex2data1.csv")
+    X, y = extract_data("ex2/ex2data1.csv")
 
     best_params, best_poly, best_score = analyze_log_reg(X, y, 10)
 
@@ -200,7 +200,7 @@ def analyze_dataset_1():
 
 # Find a well fitted model for the second data set
 def analyze_dataset_2():
-    X, y = extractData("ex2/ex2data2.csv")
+    X, y = extract_data("ex2/ex2data2.csv")
 
     best_params, best_poly, best_score = analyze_log_reg(X, y, 10)
 
